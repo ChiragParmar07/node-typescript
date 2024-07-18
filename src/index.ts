@@ -1,12 +1,30 @@
-import express, { Request, Response } from 'express';
+import express, { Application, Request, Response } from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import router from './routers/index';
+import sequelize from './utils/connections';
+dotenv.config();
 
-const app = express();
-const port = 5050;
+const PORT = process.env.PORT || 5050;
+const app: Application = express();
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, World!');
+app.use(express.json());
+app.use(cors());
+app.use('/api', router);
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response) => {
+  console.error(err.stack);
+  res.status(500).json({ message: err.message });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+// Starting the server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+  sequelize
+    .sync({ force: false })
+    .then(() => {
+      console.log('Database connection established');
+    })
+    .catch((error) => console.log('Unable to connect to the database:', error));
 });
